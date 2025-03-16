@@ -1,0 +1,65 @@
+---
+title: "An Analysis of Factors Influencing High IMDB Ratings"
+author: "Group 8"
+number-sections: true
+format: 
+  html:
+    embed-resources: true
+    code-tools: true
+  pdf: default
+editor_options:
+  chunk_output_type: console
+execute: 
+  echo: false
+  eval: true
+  warning: false
+  message: false
+---
+
+##  Data Description
+
+```{=tex}
+\textbf{Source}: IMDB film database
+
+\textbf{Description of variables:}
+\begin{itemize}
+  \item \texttt{film\_id}: Unique identifier
+  \item \texttt{year}: Year of release
+  \item \texttt{length}: Duration (minutes)
+  \item \texttt{budget}: Production budget (in \$10 million)
+  \item \texttt{votes}: Number of viewer votes
+  \item \texttt{genre}: Genre of the film
+  \item \texttt{rating}: IMDB score from 0--10
+\end{itemize}
+
+\textbf{Total observations}: 2,847 films
+
+\textbf{Objective of the analysis}: To determine which factors of films are associated with an IMDB rating above 7 by using a Generalised Linear Model (GLM).
+```
+
+
+##  Data Preparing & Cleaning
+
+```{r}
+data <- read.csv("dataset08.csv")
+```
+
+## Exploratory Data Analysis (EDA)
+
+```{r}
+
+```
+
+## Statistical Modelling
+
+```{r}
+
+```
+
+## Model Diagnostics
+
+```{r}
+
+```
+
+## Conclusions
