@@ -16,7 +16,7 @@ execute:
   message: false
 ---
 
-##  Data Description
+# Data Description
 
 ```{=tex}
 \textbf{Source}: IMDB film database
@@ -48,8 +48,9 @@ library(dplyr)
 
 ```
 
-##  Data Preparing & Cleaning
+# Data Preparing & Cleaning
 
+## Data Cleaning
 ```{r}
 #| echo: true
 # Load dataset
@@ -100,24 +101,35 @@ ggplot(clean_data, aes(x = votes)) +
 #The 'votes' variable is highly right-skewed.
 #A log-transformation should be applied before using this variable in modelling.
 ```
+## Train-Test Splitting
+```{r}
+#| echo: true
+set.seed(69)
+# From this part, we split into 60/40
+# A larger test set (40%) allows for more reliable model evaluation
+train_data_index <- sample(seq_len(nrow(clean_data)), size = 0.6 * nrow(clean_data))
+
+train_data <- clean_data[train_data_index, ]
+test_data <- clean_data[-train_data_index, ]
+```
 
 
-## Exploratory Data Analysis (EDA)
+# Exploratory Data Analysis (EDA)
 
 ```{r}
 
 ```
 
-## Statistical Modelling
+# Statistical Modelling
 
 ```{r}
 
 ```
 
-## Model Diagnostics
+# Model Diagnostics
 
 ```{r}
 
 ```
 
-## Conclusions
+# Conclusions
