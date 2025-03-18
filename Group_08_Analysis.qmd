@@ -45,7 +45,10 @@ library(ggplot2)
 library(tidyverse)
 library(gt)
 library(dplyr)
-
+library(MASS)
+library(pROC)
+library(caret)
+library(car)
 ```
 
 # Data Preparing & Cleaning
@@ -122,14 +125,178 @@ test_data <- clean_data[-train_data_index, ]
 
 # Statistical Modelling
 
-```{r}
+In this section, we will perform the modelling of the generalised linear model.
 
+From the visualisation results, the votes variables show a right-skewed (skewed distribution), so a log transformation is needed before modelling:
+
+```{r}
+#| echo: true
+
+#Performs a log transformation on the votes variable
+clean_data=clean_data%>%
+  mutate(log_votes=log(votes+1)) #Avoiding the log(0) problem
 ```
+
+Firstly, to test whether year should be put into the model as a continuous or grouped variable, we fitted a model for each and observed their AIC values:
+
+```{r}
+#| echo: true
+
+#Fitting the GLM logistic regression model
+glm_model=glm(rating_above_7~length+log_votes+budget+genre+year, 
+                 data=clean_data, 
+                 family=binomial(link="logit"))
+summary(glm_model)
+glm_model1=glm(rating_above_7~length+log_votes+budget+genre+decade_group, 
+                 data=clean_data, 
+                 family=binomial(link="logit"))
+summary(glm_model1)
+AIC(glm_model,glm_model1)
+```
+
+From the results, the model with year as a continuous variable has lower AIC values and significant variables, so we will use this model for subsequent stepwise regressions.
+
+```{r}
+#| echo: true
+
+#Stepwise regression
+best_model=stepAIC(glm_model,direction="both")
+summary(best_model)
+AIC(glm_model,best_model)
+```
+
+After the stepwise regression method, it is found that the AIC of the model is the same as the original model, but some of the variables of the original model are not significant, after that we will continue to search for the best model by eliminating the non-significant variables.
+
+```{r}
+#| echo: true
+
+#Model selection by removing insignificant variables
+clean_data_selected=clean_data%>% 
+  filter(genre%in%c("Comedy","Documentary","Drama","Short"))
+glm_model_reduced=glm(rating_above_7~length+log_votes+budget+genre+year,
+                      family=binomial(link="logit"),data=clean_data_selected)
+summary(glm_model_reduced)
+```
+
+From the results, log_votes and genreShort are still not significant and we will continue with the culling.
+
+```{r}
+#| echo: true
+
+#Model selection by removing insignificant variables
+clean_data_selected=clean_data%>% 
+  filter(genre%in%c("Comedy","Documentary","Drama"))
+glm_model_reduced1=glm(rating_above_7~length+budget+genre+year,
+                       family=binomial(link="logit"),data=clean_data_selected)
+summary(glm_model_reduced1)
+AIC(glm_model_reduced,glm_model_reduced1)
+```
+
+After this exclusion, the resulting model variables were all significant and had the smallest AIC values, and we will use the model for subsequent evaluations.
 
 # Model Diagnostics
 
-```{r}
+In this section, we will perform model diagnostics on the resulting model.
 
+First we will look at the goodness-of-fit of the model by calculating the pseudo R²:
+
+```{r}
+#| echo: true
+
+#Evaluating the goodness-of-fit of the model
+#Pseudo R²
+pR2=1-(glm_model_reduced1$deviance/glm_model_reduced1$null.deviance)
+print(pR2)
 ```
+
+In GLM (logistic regression), the pseudo R² can be used to measure the explanatory power: as can be seen from the results, the pseudo R² is 0.60, which proves that the model has some explanatory power.
+
+Next, we will perform a residual analysis:
+
+```{r}
+#| echo: true
+
+#Residual Analysis
+#Getting the residuals
+residuals_data=data.frame(Index=1:length(residuals(glm_model_reduced1)), 
+                          Residuals=residuals(glm_model_reduced1,type="deviance"))
+```
+
+```{r}
+#| label: fig-res
+#| fig-cap: Residual Plot with LOESS Smoothing
+#| fig-align: center
+#| fig-pos: H
+
+#Plotting Residuals and Trendlines
+ggplot(residuals_data,aes(x=Index,y=Residuals))+
+  geom_point(alpha=0.5,color="black")+
+  geom_smooth(method="loess",color="red",se=FALSE)+
+  labs(x="Index",y="Deviance Residuals")+
+  theme_minimal()
+```
+
+```{r}
+#| label: fig-hist
+#| fig-cap: Histogram of Residuals
+#| fig-align: center
+#| fig-pos: H
+
+#Plotting Histogram of Residuals
+ggplot(residuals_data,aes(x=Residuals))+
+  geom_histogram(bins=30,col="white",fill="lightblue")+
+  labs(x="Residuals",y="Count")
+```
+
+The two residual plots show that the model is overall good and acceptable.
+
+Next we will calculate the ROC curve and AUC values to observe the predictive power of the model.
+
+```{r}
+#| echo: true
+
+#Assessment of predictive capacity
+#predictive probability
+pred_probs=predict(glm_model_reduced1,type="response")
+```
+
+```{r}
+#| label: fig-ROC
+#| fig-cap: Plot of ROC
+#| fig-align: center
+#| fig-pos: H
+
+#Calculate ROC curve & AUC
+roc_obj=roc(clean_data_selected$rating_above_7,pred_probs)
+plot(roc_obj,col="blue")
+```
+
+```{r}
+#| echo: true
+
+auc(roc_obj)  #View AUC values
+```
+
+Area under the curve is 0.9544, which means ths model is good.
+
+```{r}
+#| echo: true
+
+#Calculate the confusion matrix
+pred_class=ifelse(pred_probs>0.5,1,0)
+conf_matrix=confusionMatrix(as.factor(pred_class),as.factor(clean_data_selected$rating_above_7))
+print(conf_matrix)
+```
+
+By calculating the confusion matrix, Accuracy = 88%, the model predicts more accurately overall and the model performs well and can be used for further analysis or optimisation.
+
+```{r}
+#| echo: true
+
+#Multicollinearity check
+vif(glm_model_reduced1)
+```
+
+In the model, the VIF values of all the variables are close to 1, indicating that there is little or no covariance between these variables. Therefore, the model is stable with respect to multicollinearity and no further treatment of covariance is required.
 
 # Conclusions
