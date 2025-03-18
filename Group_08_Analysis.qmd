@@ -223,6 +223,7 @@ residuals_data=data.frame(Index=1:length(residuals(glm_model_reduced1)),
 ```
 
 ```{r}
+#| echo: true
 #| label: fig-res
 #| fig-cap: Residual Plot with LOESS Smoothing
 #| fig-align: center
@@ -237,6 +238,7 @@ ggplot(residuals_data,aes(x=Index,y=Residuals))+
 ```
 
 ```{r}
+#| echo: true
 #| label: fig-hist
 #| fig-cap: Histogram of Residuals
 #| fig-align: center
@@ -261,6 +263,7 @@ pred_probs=predict(glm_model_reduced1,type="response")
 ```
 
 ```{r}
+#| echo: true
 #| label: fig-ROC
 #| fig-cap: Plot of ROC
 #| fig-align: center
