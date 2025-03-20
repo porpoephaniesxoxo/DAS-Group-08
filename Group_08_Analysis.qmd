@@ -48,6 +48,7 @@ library(MASS)
 library(pROC)
 library(caret)
 library(car)
+library(tidyr)
 ```
 
 # Data Preparing & Cleaning
@@ -113,9 +114,7 @@ From the data overview, we will build summary statistics for both numeric and ca
 #| echo: true
 #| message: false
 #| warning: false
-library(gt)
-library(dplyr)
-library(tidyr)
+
 #Built the summary statistics table for Numeric Variables by create function
 make_table <- function(data, name, label = NULL) {
   if (is.null(label)) label <- name
@@ -744,3 +743,13 @@ vif(glm_model_reduced1)
 In the model, the VIF values of all the variables are close to 1, indicating that there is little or no covariance between these variables. Therefore, the model is stable with respect to multicollinearity and no further treatment of covariance is required.
 
 # Conclusions
+
+Based on our analysis, we have identified several key factors that influence whether a film receives an IMDB rating above 7.
+
+The first thing about key predictors of high IMDB ratings is the following four main points: shorter films tend to have higher ratings, while longer films are more likely to receive lower scores; films with higher budgets show a slight tendency to receive better ratings; documentary and comedy films are more likely to be highly rated, while Drama films tend to receive lower ratings; newer films have a slightly higher probability of receiving high ratings, but the effect is relatively small.
+
+Regarding the performance of the model, the final logistic regression model achieved an accuracy of 88%, indicating a strong predictive ability. And the AUC value of 0.95 suggests that the model performs well in distinguishing between high and low-rated films. The VIF values indicate no severe multicollinearity, confirming the stability of the model.
+
+For filmmakers, investing in quality content (rather than just large budgets) and targeting specific genres like Comedy and Documentary may increase the likelihood of receiving high ratings. As for streaming platforms, understanding these factors can help recommend films with a higher probability of positive audience reception.
+
+But our model also has some limitations, the model does not account for qualitative factors such as storytelling, acting, or audience demographics, which may also influence ratings. Future studies could incorporate sentiment analysis from reviews or explore additional variables such as director reputation and marketing influence.
